@@ -1,0 +1,193 @@
+#------------------------------------------------------------------------------
+# butadiene.model
+#
+# A three-compartment minimal physiological model of butadiene with primary 
+# metabolism. Inhalation is modeled.
+# States are quantities of butadiene and metabolite formed.
+#
+# Copyright (c) 1993-2016 Free Software Foundation, Inc.
+#------------------------------------------------------------------------------
+
+States  = {Q_fat,             # Butadiene quantity in the fat        (mg)
+           Q_wp,              # ~         in well-perfused tissues   (mg)
+           Q_pp};             # ~         in poorly-perfused tissues (mg)
+
+
+Outputs = {C_alv,             # Butadiene concentration in alveolar air   (mg/l)
+           C_exh,             # ~                          exhaled        (ppm)
+           C_art,             # ~                          arterial blood (mg/l)
+           C_ven,             # ~                          venous blood   (mg/l)
+           dQ_ven,            # 
+           PC_art_obs,        # Measured blood/air partition coefficient
+           Flow_pul_obs};     # ~        pulmonary flow
+
+Inputs  = {C_inh};            # Butadiene concentration inhaled (ppm)
+
+
+# Constants
+# =========
+# Molecular weight (in grams)
+MW_bu = 54.0914;
+
+# Conversions between ppm and mM (under normal conditions):
+ppm_per_mM = 24450;
+
+# Conversions from/to ppm: 24450 ppm = 54.0914 mg/l
+ppm_per_mg_per_l = 24450 / 54.0914;
+mg_per_l_per_ppm = 1 / ppm_per_mg_per_l;
+
+
+# Default parameter values
+# ========================
+# Units:
+# Volumes: liter
+# Time:    minute
+# Flows:   liter / minute
+
+# Physiological and pharmacokinetic parameters
+# --------------------------------------------
+# Bodyweight (kg)
+BDW    = 73;  # standard value
+height = 1.6; # meters
+Age    = 40;
+Sex    = 1;
+N_BR   = 12; # nbr of breathes per minute
+
+# Tissue volumes as % of BDW (density 1 assumed)
+Pct_BDW_wp  = 0.2;  # well perfused tissue, % of lean mass
+
+# Pulmonary ventilation rate (minute volume) (L/min)
+Flow_pul = 5;
+
+Pct_Deadspace = 0.7; # Percent pulmonary deadspace
+
+Pct_Flow_fat = 0.1;
+Pct_Flow_pp  = 0.35;
+
+# Blood/air partition coefficient
+PC_art = 2;
+
+# Tissue/blood partition coefficients
+PC_fat = 22;
+PC_wp  = 0.8;
+PC_pp  = 0.8;
+
+# Ventilation over perfusion ratio
+Vent_Perf = 1.14;
+
+# Hepatic rate constant for metabolism (1/min)
+Kmetwp = 0.25;
+
+
+# Statistical parameters
+# ----------------------
+# Variances inter individuelles
+Vr_PC_pp        = 0.182; # factor 1.2
+Vr_PC_wp        = 0.182; # factor 1.2
+Vr_Pct_dead     = 0.182; # factor 1.2
+Vr_Pct_Flow_fat = 0.182; # factor 1.2
+Vr_Pct_Flow_pp  = 0.182; # factor 1.2
+Vr_Pct_BDW_wp   = 0.182; # factor 1.2
+Vr_PC_art       = 0.182; # factor 1.2
+Vr_Flow_pul     = 0.182; # factor 1.2 
+Vr_Km_wp        = 0.182; # factor 1.2
+SD_exh          = 1.3;
+
+# Variances intra individuelles
+Va_Pct_dead     = 0.182; # factor 1.2
+Va_Pct_BDW_wp   = 0.182; # factor 1.2
+Va_Pct_Flow_fat = 0.182; # factor 1.2
+Va_Pct_Flow_pp  = 0.182; # factor 1.2
+Va_Flow_pul     = 0.182; # factor 1.3  
+Va_PC_art       = 0.182; # factor 1.2
+Va_PC_pp        = 0.182; # factor 1.2
+Va_PC_wp        = 0.182; # factor 1.2
+Va_Km_wp        = 0.182; # factor 1.2
+
+
+
+# Scaled parameters
+# -----------------
+# The following parameters are calculated from the above values in the
+# Scale section before the start of each simulation.
+# They are left uninitialized here.
+
+# Total blood flow
+Flow_tot = 0;
+Flow_alv = 0;
+
+Eff_V_fat = 0;
+Eff_V_wp  = 0;
+Eff_V_pp  = 0;
+
+Flow_fat = 0;
+Flow_wp  = 0;
+Flow_pp  = 0;
+
+
+Initialize {
+
+  # Calculate Flow_alv from total pulmonary flow
+  Flow_alv = Flow_pul * (1 - Pct_Deadspace);
+
+  # Calculate total blood flow from the alveolar ventilation rate and the
+  # V/P ratio.
+  Flow_tot = Flow_alv / Vent_Perf;
+
+  Pct_BDW_fat = (1.2 * BDW / (height * height) - 10.8 *(2 - Sex) + 
+                 0.23 * Age - 5.4) * 0.01;
+  # 1 male, 2 female
+  Eff_V_fat = Pct_BDW_fat * BDW;
+  Eff_V_wp  = Pct_BDW_wp  * BDW * (1 - Pct_BDW_fat);
+  Eff_V_pp  = 0.9 * BDW - Eff_V_fat - Eff_V_wp;
+
+  # Calculate actual blood flows from total flow and percent flows
+  Flow_fat = Pct_Flow_fat * Flow_tot;
+  Flow_pp  = Pct_Flow_pp  * Flow_tot;
+  Flow_wp  = Flow_tot * (1 - Pct_Flow_pp - Pct_Flow_fat);
+
+} # end of Initialize
+
+
+Dynamics {
+
+  # Venous blood concentrations at the organ exit
+  Cout_fat = Q_fat / (Eff_V_fat * PC_fat);
+  Cout_wp  = Q_wp  / (Eff_V_wp  * PC_wp );
+  Cout_pp  = Q_pp  / (Eff_V_pp  * PC_pp );
+
+  # Sum of Flow * Concentration for all compartments
+  dQ_ven = Flow_fat * Cout_fat + Flow_wp * Cout_wp + Flow_pp * Cout_pp;
+
+  # Arterial blood concentration
+  # Convert input given in ppm to mg/l to match other units
+  C_art = (Flow_alv * C_inh / ppm_per_mg_per_l + dQ_ven) /
+          (Flow_tot + Flow_alv / PC_art);
+
+  # Quantity metabolized in liver
+  dQmet_wp = Kmetwp * Q_wp;
+
+  # Differentials for quantities
+  dt (Q_fat) = Flow_fat * (C_art - Cout_fat);
+  dt (Q_wp)  = Flow_wp  * (C_art - Cout_wp) - dQmet_wp;
+  dt (Q_pp)  = Flow_pp  * (C_art - Cout_pp);
+
+} # End of Dynamics
+
+
+CalcOutputs {
+
+  # Venous blood concentration
+  C_ven = dQ_ven / Flow_tot; 
+  C_alv = C_art / PC_art;
+  C_exh = (C_alv <= 0 ?
+           10E-30     :
+           (1 - Pct_Deadspace) * C_alv * ppm_per_mg_per_l + 
+           Pct_Deadspace * C_inh);
+
+  Flow_pul_obs = Flow_pul / pow(BDW, 0.7);
+  PC_art_obs   = PC_art;
+
+} # End of CalcOutputs
+
+End.
