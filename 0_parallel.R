@@ -10,7 +10,7 @@ library(RMCSim)
 
 # Compile model code -----------------------------------------------------------
 model <- "butadiene.model"
-#makemcsim(model = model, mxstep = 5000, dir = "MCSim")
+makemcsim(model = model, mxstep = 5000, dir = "MCSim")
 
 # Choose input file ------------------------------------------------------------
 input <- "butadiene.mcmc.in" 
