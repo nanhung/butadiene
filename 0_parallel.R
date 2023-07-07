@@ -33,7 +33,7 @@ strt <- Sys.time()
 
 out <- foreach(i = 1:cores) %dopar% {
   set.seed(i + 1)
-  RMCSim::mcsim(model = model, input = input, dir = "MCSim", parallel = T)
+  mcsim(model = model, input = input, dir = "MCSim", parallel = T)
 }
 print(Sys.time() - strt)
 

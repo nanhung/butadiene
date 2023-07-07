@@ -81,6 +81,17 @@ Kmetwp = 0.25;
 
 # Statistical parameters
 # ----------------------
+# Population Mean
+M_Pct_BDW_wp;
+M_Pct_Deadspace;
+M_Pct_Flow_fat;
+M_Pct_Flow_pp;
+M_Flow_pul;
+M_PC_art;
+M_PC_pp;
+M_PC_wp;
+M_Kmetwp;
+
 # Variances inter individuelles
 Vr_PC_pp        = 0.182; # factor 1.2
 Vr_PC_wp        = 0.182; # factor 1.2
