@@ -1,0 +1,61 @@
+#------------------------------------------------------------------------------
+# butadiene.poppred.in
+#------------------------------------------------------------------------------
+
+Integrate (Lsodes, 1e-8, 1e-8, 1)
+
+SetPoints ("poppred.out",
+           "poppred.dat", 
+           0,
+           M_Pct_BDW_wp,
+           M_Pct_Deadspace,
+           M_Pct_Flow_fat,
+           M_Pct_Flow_pp,
+           M_Flow_pul,
+           M_PC_art,
+           M_PC_pp,
+           M_PC_wp,
+           M_Kmetwp,
+           Vr_Pct_BDW_wp,
+           Vr_Pct_dead,
+           Vr_Pct_Flow_fat,
+           Vr_Pct_Flow_pp,
+           Vr_Flow_pul,
+           Vr_PC_art,
+           Vr_PC_pp,
+           Vr_PC_wp,
+           Vr_Km_wp
+);
+
+Distrib (Pct_BDW_wp,    
+         TruncLogNormal_v, M_Pct_BDW_wp, Vr_Pct_BDW_wp,   0.1,  0.35);
+Distrib (Pct_Deadspace,
+         TruncLogNormal_v, M_Pct_Deadspace, Vr_Pct_dead,     0.23, 0.45);
+Distrib (Pct_Flow_fat,
+         TruncLogNormal_v, M_Pct_Flow_fat,  Vr_Pct_Flow_fat, 0.03, 0.09);
+Distrib (Pct_Flow_pp,
+         TruncLogNormal_v, M_Pct_Flow_pp,   Vr_Pct_Flow_pp,  0.06, 0.26);
+Distrib (Flow_pul,
+         TruncLogNormal_v, M_Flow_pul,      Vr_Flow_pul,     4.0,  12.0);
+Distrib (PC_art,
+         TruncLogNormal_v, M_PC_art,        Vr_PC_art,       0.75, 2.25);
+Distrib (PC_pp,
+         TruncLogNormal_v, M_PC_pp,         Vr_PC_pp,        0.4,  1.2);
+Distrib (PC_wp,
+         TruncLogNormal_v, M_PC_wp,         Vr_PC_wp,        0.4,  1.2);
+Distrib (Kmetwp,
+         TruncLogNormal_v, M_Kmetwp,        Vr_Km_wp,        0.01, 0.6);
+
+Experiment { # Subject 1, Experiment 1
+  
+  BDW   = 86.2600;
+  height= 1.7400;
+  Sex   = 1;
+  Age   = 28;
+  
+  C_inh = NDoses (2, 2, 0, 0, 20);
+  
+  Print(C_exh, 0.5, 1, 2, 5, 10, 15, 19, 21, 22, 28, 38, 58);
+
+}
+End.

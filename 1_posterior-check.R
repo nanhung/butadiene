@@ -34,7 +34,7 @@ dim(mcmc_out) <- c(l, length(pars))
 colnames(mcmc_out) <- pars
 save(mcmc_out, file = file.path(save_directory, file_name))
 
-df <- read.delim("outputs/butadiene_check_6734.out")
-plot(df$Data, df$Prediction)
+x <- read.delim("outputs/butadiene_check_6734.out")
+plot(x$Data, x$Prediction)
 abline(0,1)
 
