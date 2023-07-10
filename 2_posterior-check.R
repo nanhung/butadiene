@@ -1,6 +1,8 @@
+# Load packages -------------------------------------------------------------------------
 library(data.table) # fread
 library(purrr) # map
 library(rstan) # monitor
+library(ggplot2)
 
 out <- c("outputs/butadiene_6734.out",
          "outputs/butadiene_4880.out",
@@ -21,6 +23,7 @@ dimnames(x)[[3]] <- names(data[[1]])
 
 pars_name <- dimnames(x)[[3]]
 
+# Posterior check
 j <- 502:1001
 mnt <- monitor(x[j, , pars_name[-1]], digit = 6, print = T)
 
@@ -34,7 +37,8 @@ dim(mcmc_out) <- c(l, length(pars))
 colnames(mcmc_out) <- pars
 save(mcmc_out, file = file.path(save_directory, file_name))
 
+# Plot
 x <- read.delim("outputs/butadiene_check_6734.out")
-plot(x$Data, x$Prediction)
-abline(0,1)
-
+pdf(file = "outputs/validation.pdf", width = 9, height = 9)
+ggplot(data = x) + geom_point(aes(x=Data, y=Prediction)) + geom_abline(slope = 1)
+dev.off()
